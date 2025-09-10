@@ -1,0 +1,62 @@
+#include <NewPing.h>
+#include <SoftwareSerial.h>
+
+// Ultrasonic sensor pins
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+#define MAX_DISTANCE 200 
+
+// Initialize NewPing for Ultrasonic sensor
+NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
+
+// GSM module pins
+SoftwareSerial gsm(7, 8); // RX, TX
+
+// Bin parameters
+const int binHeight = 50; 
+const int thresholdPercent = 80;
+
+void setup() {
+  Serial.begin(9600);
+  gsm.begin(9600);
+
+  delay(2000);
+  Serial.println("Smart Wastebin System Starting...");
+  sendSMS("Smart Wastebin System Initialized.");
+}
+
+void loop() {
+  delay(50); 
+  int distance = sonar.ping_cm();
+
+  if (distance == 0) {
+    Serial.println("No reading from sensor...");
+    return;
+  }
+
+  // Calculate fill percentage
+  int fillLevel = map(binHeight - distance, 0, binHeight, 0, 100);
+
+  Serial.print("Bin Fill Level: ");
+  Serial.print(fillLevel);
+  Serial.println("%");
+
+  if (fillLevel >= thresholdPercent) {
+    Serial.println("Threshold reached! Sending alert...");
+    sendSMS("Alert: Wastebin is 80% full. Please empty.");
+    delay(60000); 
+  }
+
+  delay(5000); 
+}
+// Set GSM to text mode
+void sendSMS(String message) {
+  gsm.println("AT+CMGF=1"); 
+  delay(200);
+  gsm.println("AT+CMGS=\"+234XXXXXXXXXX\""); 
+  delay(200);
+  gsm.println(message);
+  delay(200);
+  gsm.write(26);
+  delay(5000);
+}
