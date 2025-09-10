@@ -1,24 +1,33 @@
 #include <NewPing.h>
 #include <SoftwareSerial.h>
+#include <Servo.h>
 
-// Ultrasonic sensor pins
-#define TRIG_PIN 9
-#define ECHO_PIN 10
-#define MAX_DISTANCE 200 
+// ---------- Pins ----------
+#define TRIG_LID 4
+#define ECHO_LID 5
+#define TRIG_BIN 9
+#define ECHO_BIN 10
+#define MAX_DISTANCE 200
 
-// Initialize NewPing for Ultrasonic sensor
-NewPing sonar(TRIG_PIN, ECHO_PIN, MAX_DISTANCE);
+// ---------- Objects ----------
+NewPing lidSensor(TRIG_LID, ECHO_LID, MAX_DISTANCE);
+NewPing binSensor(TRIG_BIN, ECHO_BIN, MAX_DISTANCE);
+SoftwareSerial gsm(7, 8); // GSM module RX, TX
+Servo lidMotor;
 
-// GSM module pins
-SoftwareSerial gsm(7, 8); // RX, TX
-
-// Bin parameters
-const int binHeight = 50; 
-const int thresholdPercent = 80;
+// ---------- Parameters ----------
+const int binHeight = 50;        
+const int thresholdPercent = 80;  
+const int openDistance = 15;      
+bool lidOpen = false;
 
 void setup() {
   Serial.begin(9600);
   gsm.begin(9600);
+
+// servo motor
+  lidMotor.attach(6);  
+  lidMotor.write(0);   
 
   delay(2000);
   Serial.println("Smart Wastebin System Starting...");
@@ -26,37 +35,28 @@ void setup() {
 }
 
 void loop() {
-  delay(50); 
-  int distance = sonar.ping_cm();
-
-  if (distance == 0) {
-    Serial.println("No reading from sensor...");
-    return;
-  }
-
-  // Calculate fill percentage
-  int fillLevel = map(binHeight - distance, 0, binHeight, 0, 100);
-
-  Serial.print("Bin Fill Level: ");
-  Serial.print(fillLevel);
-  Serial.println("%");
-
-  if (fillLevel >= thresholdPercent) {
-    Serial.println("Threshold reached! Sending alert...");
-    sendSMS("Alert: Wastebin is 80% full. Please empty.");
-    delay(60000); 
-  }
-
-  delay(5000); 
+  checkLid();       
+  checkFillLevel(); 
+  delay(500);      
 }
-// Set GSM to text mode
-void sendSMS(String message) {
-  gsm.println("AT+CMGF=1"); 
-  delay(200);
-  gsm.println("AT+CMGS=\"+234XXXXXXXXXX\""); 
-  delay(200);
-  gsm.println(message);
-  delay(200);
-  gsm.write(26);
-  delay(5000);
+
+// ---------- Lid Automation ----------
+void checkLid() {
+  int distance = lidSensor.ping_cm();
+
+  if (distance > 0 && distance < openDistance && !lidOpen) {
+    Serial.println("Object detected! Opening lid...");
+    lidMotor.write(90); 
+    lidOpen = true;
+    delay(5000);        
+  } else if (lidOpen) {
+    Serial.println("Closing lid...");
+    lidMotor.write(0);  
+    lidOpen = false;
+    delay(1000);
+  }
 }
+
+// ---------- Bin Fill Monitoring ----------
+void checkFillLevel() {
+  int distance = binSensor.ping_cm();
