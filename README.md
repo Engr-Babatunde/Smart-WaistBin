@@ -1,33 +1,51 @@
-📖 **Introduction**
+****Smart Wastebin****
 
-The Smart Wastebin is an IoT-based system designed to monitor the fill level of a waste container and send an alert to the sanitary office when the bin reaches 80% capacity. This project was originally developed as a National Diploma (ND) final year project.
+**📖 Introduction**
 
-By automating waste monitoring, this system helps:
+The Smart Wastebin is an IoT-enabled system designed to improve sanitation efficiency. It combines automatic lid control with waste-level monitoring and SMS alerts.
 
-Reduce manual inspection efforts
+The lid opens automatically when a person approaches, making disposal hands-free and hygienic.
 
-Improve sanitation efficiency
+An ultrasonic sensor inside the bin continuously monitors the fill level.
 
-Prevent overflow and maintain cleaner environments
+When the waste reaches 80% capacity, a GSM module sends an SMS notification to the sanitary office, ensuring timely collection.
 
-🛠️ **Components Used**
+This project was originally developed as a National Diploma (ND) final year project.
 
-Arduino microcontroller (or ESP8266/ESP32 if used for communication)
+**🛠️ Components Used**
 
-Ultrasonic sensor (for level detection)
+Arduino Uno / Mega (microcontroller)
 
-GSM module (SIM800L or similar) for SMS alert
+Ultrasonic Sensor (HC-SR04) x2
 
-Power supply unit
+Sensor 1 → detects approaching hand/object (lid control)
+
+Sensor 2 → monitors waste level inside bin
+
+Servo Motor (SG90/MG90S) → for lid opening/closing
+
+GSM Module (SIM800L / SIM900) → sends SMS alerts
+
+Power supply unit (stable 5V, GSM may need separate 2A regulator)
 
 Prototype wastebin enclosure
 
-⚙️ **How It Works**
+**⚙️ How It Works**
 
-Ultrasonic sensor monitors the waste level inside the bin.
+Automatic Lid
 
-Once the fill level reaches 80%, the system triggers an alert.
+When someone approaches within ~15 cm of the bin, the ultrasonic sensor detects it.
 
-The GSM module sends an SMS notification to the designated sanitary office phone number.
+The servo motor opens the lid automatically.
 
-The bin can then be emptied promptly to avoid overflow.
+After 5 seconds, the lid closes again.
+
+Waste-Level Monitoring
+
+A second ultrasonic sensor inside the bin measures the fill level.
+
+If the bin reaches 80% full, the Arduino triggers the GSM module.
+
+SMS Alert
+
+The GSM module sends an SMS notification:
